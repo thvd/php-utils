@@ -1,4 +1,8 @@
 <?php
+/**
+ * @author Theodoor van Donge
+ * @package Utils
+ */
 
 
 namespace Utils;
@@ -8,7 +12,7 @@ use ArrayObject;
 
 
 /**
- * This class is a (not a complete) equivalent to the Java ArrayList class
+ * This class tries to fill the gap between Java ArrayList and php arrays and the array object
  */
 class ArrayList extends ArrayObject {
 	
@@ -23,12 +27,19 @@ class ArrayList extends ArrayObject {
 	 * Constructor for ArrayList class, and it is possible to set a type for the ArrayList
 	 * 
 	 * @param string $type
+	 * @param array $array Initial array insert
 	 */
-	public function __construct($type = null) {
-		parent::__construct(array());
-		
-		if (null != $type) {
+	public function __construct($type = null, array $array = array()) {
+		if (null == $this->type) {
+			parent::__construct($array);
+		} else {
+			parent::__construct(array());
+			
 			$this->setType($type);
+			
+			foreach ($array as $object) {
+				$this->add($object);
+			}
 		}
 	}
 	
@@ -50,7 +61,18 @@ class ArrayList extends ArrayObject {
 	
 	
 	/**
-	 * With this method you can change the type for the ArrayList 'on the fly'
+	 * This method fetch the type used in the ArrayList
+	 * 
+	 * @return string $type
+	 */
+	public function getType() {
+		return $this->type;
+	}
+	
+	
+	/**
+	 * With this method you can change the type for the 
+	 * ArrayList after instanciate
 	 * 
 	 * @param string $type
 	 * @throws InvalidArgumentException
@@ -66,12 +88,13 @@ class ArrayList extends ArrayObject {
 	/**
 	 * This method add a object to the ArrayObject
 	 * 
-	 * @param Object $object
+	 * @param stdClass $object
 	 */
 	public function add($object) {
 		if ($this->isTypeOf($object)) {
-			parent::append($object);
+			return parent::append($object);
 		}
+		throw new InvalidArgumentException('Object must be of the type: ' . $this->type);
 	}
 	
 	
@@ -89,7 +112,7 @@ class ArrayList extends ArrayObject {
 		} else if ($object instanceof $this->type) {
 			return true;
 		} else {
-			throw new InvalidArgumentException('Object must be of the type: ' . $this->type);
+			return false;
 		}
 	}
 	
@@ -100,11 +123,27 @@ class ArrayList extends ArrayObject {
 	 * See also this page: http://php.net/manual/en/function.array-unshift.php
 	 * 
 	 * @see http://php.net/manual/en/function.array-unshift.php
+	 * @uses array_unshift
 	 * @param stdClass $object
 	 */
 	public function unshift($object) {
 		$tempArray = parent::getArrayCopy();
 		array_unshift($tempArray, $object);
 		parent::exchangeArray($tempArray);
+	}
+	
+	
+	/**
+	 * This method can merge different lists, or array types 
+	 * 
+	 * @param AbstractMergeArrayStrategy $mergeStrategy
+	 * @param any type of array supported by the merge strategy
+	 * @return 
+	 * @see http://php.net/manual/en/function.array-merge.php
+	 * @uses array_merge 
+	 * @throws InvalidArgumentException
+	 */
+	public function merge(AbstractMergeArrayStrategy $mergeStrategy, $otherArray) {
+		return $mergeStrategy->merge($this, $otherArray);
 	}
 }
